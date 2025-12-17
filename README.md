@@ -6,6 +6,8 @@ This is my biggest non commercial project. 💕
 This site is a collection of sites for my friends. Mostly annual awards C:
 
 ## Changelog / Roadmap
+#### Main page
+- Animations and loading screen ✔️
 #### Calendar
 - Popup avatars on hover ✔️
 - Animations and loading screen ✔️
