@@ -1,3 +1,97 @@
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.96); }
+  60% { opacity: 1; transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Прелоадер */
+#hub-loader {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+#hub-loader img {
+  max-width: 260px;
+  width: 80%;
+  height: auto;
+}
+
+.loader-bar {
+  width: 60%;
+  max-width: 420px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  margin-top: 18px;
+  overflow: hidden;
+}
+
+.loader-progress {
+  height: 100%;
+  width: 0;
+  background: #ff0000;
+  animation: loaderProgress 3.3s linear forwards;
+}
+
+@keyframes loaderProgress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Контент страницы скрыт, пока идёт прелоадер */
+#page-content {
+  display: none;
+}
+
+/* Анимации запускаются только когда контент показан */
+#page-content.show .header-top {
+  opacity: 0;
+  animation: fadeUp 420ms cubic-bezier(.2,.9,.2,1) 200ms both;
+}
+
+#page-content.show .moon-phase {
+  opacity: 0;
+  animation: popIn 420ms ease 300ms forwards;
+}
+
+#page-content.show h1 {
+  opacity: 0;
+  animation: fadeUp 420ms cubic-bezier(.2,.9,.2,1) 400ms both;
+}
+
+#page-content.show .link-card {
+  opacity: 0;
+  animation: fadeUp 360ms cubic-bezier(.2,.9,.2,1) both;
+}
+
+#page-content.show footer {
+  opacity: 0;
+  animation: fadeUp 360ms cubic-bezier(.2,.9,.2,1) 1000ms both;
+}
+
+#page-content.show .video-button,
+#page-content.show .ps-dragoman {
+  opacity: 0;
+  animation: fadeIn 320ms ease 1200ms both;
+}
+
 body {
   font-family: sans-serif;
   background: url('assets/pgHUB/bg.jpg') no-repeat center center fixed;
