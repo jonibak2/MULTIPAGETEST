@@ -1,3 +1,5 @@
+let animationsEnabled = false;
+
 const birthdays = [
   { name: "Эристorem", date: "2007-01-16", avatar: "assets/pgCALENDAR/eristorem.png" },
   { name: "Моринок", date: "2007-02-04", avatar: "assets/pgCALENDAR/morinok.png" },
@@ -23,6 +25,37 @@ const months = [
   'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
   'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
 ];
+
+// Прокрутка к нужному дню в календаре и краткая подсветка
+function focusOnBirthdayDate(targetDate) {
+  const targetYear = targetDate.getFullYear();
+  const targetMonth = targetDate.getMonth();
+  const targetDay = targetDate.getDate();
+
+  // Если год отличается — переключаем календарь
+  if (currentYear !== targetYear) {
+    currentYear = targetYear;
+    const yearSpan = document.getElementById('current-year');
+    if (yearSpan) {
+      yearSpan.textContent = currentYear;
+    }
+    renderAllCalendars(currentYear);
+  }
+
+  // Найти нужный день и подсветить его
+  requestAnimationFrame(() => {
+    const selector = `.calendar__day[data-year="${targetYear}"][data-month="${targetMonth}"][data-day="${targetDay}"]`;
+    const targetEl = document.querySelector(selector);
+    if (!targetEl) return;
+
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    targetEl.classList.add('calendar__day--highlight');
+
+    setTimeout(() => {
+      targetEl.classList.remove('calendar__day--highlight');
+    }, 1500);
+  });
+}
 
 function calculateAge(birthDateStr) {
   const birthDate = new Date(birthDateStr);
@@ -53,7 +86,7 @@ function renderUpcoming() {
   const upcomingList = document.getElementById('upcoming-list');
   upcomingList.innerHTML = '';
   const sortedBirthdays = [...birthdays].sort((a, b) => daysUntilNextBirthday(a.date) - daysUntilNextBirthday(b.date));
-  sortedBirthdays.forEach(birthday => {
+  sortedBirthdays.forEach((birthday, index) => {
     const currentAge = calculateAge(birthday.date);
     const nextDate = getNextBirthday(birthday.date);
     const ageOnNext = nextDate.getFullYear() - new Date(birthday.date).getFullYear();
@@ -70,19 +103,30 @@ function renderUpcoming() {
         <span>${daysText}</span>
       </div>
     `;
+    // клик по аватарке слева — перейти к дню рождения в календаре
+    const avatarImg = li.querySelector('img');
+    if (avatarImg) {
+      avatarImg.style.cursor = 'pointer';
+      avatarImg.addEventListener('click', () => {
+        const nextDateForThis = getNextBirthday(birthday.date);
+        focusOnBirthdayDate(nextDateForThis);
+      });
+    }
+    // staggered reveal (только после прелоадера)
+    if (animationsEnabled) {
+      li.classList.add('will-fade-in');
+      li.style.animation = `fadeUp 360ms cubic-bezier(.2,.9,.2,1) ${index * 70}ms both`;
+    }
+
     upcomingList.appendChild(li);
   });
 }
 
 function renderSingleCalendar(year, month) {
   const calendarContainer = document.createElement('div');
-  calendarContainer.style.boxShadow = '5px 5px 32px rgba(30, 46, 50, 0.15)';
-  calendarContainer.style.borderRadius = '12px';
-  calendarContainer.style.padding = '1.5rem';
+  calendarContainer.classList.add('calendar-card');
+  // keep lightweight inline fallbacks for older browsers
   calendarContainer.style.width = '100%';
-  calendarContainer.style.display = 'flex';
-  calendarContainer.style.flexDirection = 'column';
-  calendarContainer.style.alignItems = 'center';
 
   const today = now;
   if (year < today.getFullYear() || (year === today.getFullYear() && month < today.getMonth())) {
@@ -102,6 +146,12 @@ function renderSingleCalendar(year, month) {
   let dayNum = 1;
   const monthInner = document.createElement('div');
   monthInner.className = 'calendar__month-inner';
+  // небольшая анимация появления месяцев только после прелоадера
+  if (animationsEnabled) {
+    calendarContainer.style.opacity = 0;
+    calendarContainer.style.animation = `fadeUp 420ms cubic-bezier(.2,.9,.2,1) ${month * 36}ms both`;
+    monthInner.style.animation = `fadeUp 360ms cubic-bezier(.2,.9,.2,1) ${month * 36 + 60}ms both`;
+  }
   while (dayNum <= lastDay) {
     const week = document.createElement('section');
     week.className = 'calendar__week';
@@ -109,6 +159,10 @@ function renderSingleCalendar(year, month) {
       const day = document.createElement('div');
       day.className = 'calendar__day';
       const currentDate = new Date(year, month, dayNum);
+      // Для перехода из списка "Ближайшие дни рождения"
+      day.dataset.year = String(year);
+      day.dataset.month = String(month);
+      day.dataset.day = String(dayNum);
       const isPast = currentDate < today.setHours(0,0,0,0);
       if (isPast) {
         day.classList.add('calendar__day--past');
@@ -154,6 +208,18 @@ function renderSingleCalendar(year, month) {
       week.appendChild(emptyDay);
     }
     monthInner.appendChild(week);
+  }
+  // Ensure each month displays exactly 6 weeks so tiles stay consistent height
+  while (monthInner.children.length < 6) {
+    const emptyWeek = document.createElement('section');
+    emptyWeek.className = 'calendar__week';
+    for (let i = 0; i < 7; i++) {
+      const emptyDay = document.createElement('div');
+      emptyDay.className = 'calendar__day';
+      emptyDay.style.visibility = 'hidden';
+      emptyWeek.appendChild(emptyDay);
+    }
+    monthInner.appendChild(emptyWeek);
   }
   calendarContainer.appendChild(monthInner);
   return calendarContainer;
@@ -201,8 +267,12 @@ function showBirthdayPopup(birthdays, selectedDate) {
     }).join('')}
   `;
 
-  popup.classList.add('show');
+  // ensure popup is placed inside overlay so centering works reliably
+  if (overlay && popup && !overlay.contains(popup)) {
+    overlay.appendChild(popup);
+  }
   overlay.classList.add('show');
+  popup.classList.add('show');
 
   // Add hover event listeners to avatars
   const avatars = content.querySelectorAll('.profile-avatar');
@@ -261,10 +331,31 @@ document.getElementById('next-year').addEventListener('click', () => {
   renderAllCalendars(currentYear);
 });
 
-// Initialization
+// Initialization + прелоадер только для календаря
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('current-year').textContent = currentYear;
+  // отрисовываем данные заранее, но анимации включим только после прелоадера
+  const yearSpan = document.getElementById('current-year');
+  if (yearSpan) {
+    yearSpan.textContent = currentYear;
+  }
   renderAllCalendars(currentYear);
   renderUpcoming();
-});
 
+  const loader = document.getElementById('calendar-loader');
+  const content = document.getElementById('calendar-page-content');
+
+  setTimeout(() => {
+    animationsEnabled = true;
+
+    if (loader) {
+      loader.style.display = 'none';
+    }
+    if (content) {
+      content.style.display = 'block';
+    }
+
+    // перерисуем с включёнными анимациями для первого показа
+    renderAllCalendars(currentYear);
+    renderUpcoming();
+  }, 1500);
+});
