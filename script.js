@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
         content.classList.add('show');
       });
     }
-  }, 3300);
+  }, 2500);
 
   // Обработчик клика по фазе луны
   const audio = new Audio('assets/pgHUB/bansuka.mp3');
