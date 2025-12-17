@@ -47,7 +47,7 @@
   height: 100%;
   width: 0;
   background: #ff0000;
-  animation: loaderProgress 3.3s linear forwards;
+  animation: loaderProgress 2.5s linear forwards;
 }
 
 @keyframes loaderProgress {
