@@ -47,12 +47,7 @@
   height: 100%;
   width: 0;
   background: #ff0000;
-  animation: loaderProgress 2.5s linear forwards;
-}
-
-@keyframes loaderProgress {
-  from { width: 0; }
-  to { width: 100%; }
+  transition: width 0.3s ease;
 }
 
 /* Контент страницы скрыт, пока идёт прелоадер */

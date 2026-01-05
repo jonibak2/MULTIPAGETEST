@@ -502,10 +502,55 @@
       .member:nth-child(13) { top: 90px; left: -70px; }
       .member:nth-child(14) { top: 35px; left: -15px; }
       .member:nth-child(15) { top: 15px; left: 75px; }
+      /* LOADER */
+      #mafia-loader {
+        position: fixed;
+        inset: 0;
+        background: #000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
+      #mafia-loader img {
+        max-width: 260px;
+        width: 80%;
+        height: auto;
+      }
+
+      .loader-bar {
+        width: 60%;
+        max-width: 420px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.15);
+        margin-top: 18px;
+        overflow: hidden;
+      }
+
+      .loader-progress {
+        height: 100%;
+        width: 0;
+        background: #ff0000;
+        transition: width 0.3s ease;
+      }
+
+      #mafia-page-content {
+        display: none;
+      }
     </style>
   </head>
   <body>
+    <div id="mafia-loader">
+      <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWNuMXRjMzI2dHphd3RjejdzZGI3OGdqM3Jlenhqa3V3anY2c2M1NCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/GCj1YPjqcNErSJUr6R/giphy.gif" alt="Loading">
+      <div class="loader-bar">
+        <div class="loader-progress"></div>
+      </div>
+    </div>
 
+    <div id="mafia-page-content">
     <div id="hurry-overlay">
       <div id="hurry-text">Осталось 10 секунд!</div>
     </div>
@@ -974,6 +1019,82 @@
       document.getElementById("timer-modal").addEventListener("click", (e) => {
         if (e.target === document.getElementById("timer-modal")) closeTimerModal();
       });
+
+      // Функция для загрузки всех изображений
+      function preloadAllMedia() {
+        const images = document.querySelectorAll("img");
+        const allMedia = [...images];
+        
+        let loadedCount = 0;
+        const totalCount = allMedia.length;
+        
+        if (totalCount === 0) {
+          hideLoader();
+          return;
+        }
+        
+        const updateProgress = () => {
+          const progress = (loadedCount / totalCount) * 100;
+          const progressBar = document.querySelector(".loader-progress");
+          if (progressBar) {
+            progressBar.style.width = `${progress}%`;
+          }
+        };
+        
+        allMedia.forEach(media => {
+          if (media.complete) {
+            loadedCount++;
+            updateProgress();
+            checkComplete();
+          } else {
+            media.addEventListener("load", () => {
+              loadedCount++;
+              updateProgress();
+              checkComplete();
+            });
+            media.addEventListener("error", () => {
+              loadedCount++;
+              updateProgress();
+              checkComplete();
+            });
+          }
+        });
+        
+        function checkComplete() {
+          if (loadedCount >= totalCount) {
+            setTimeout(() => {
+              hideLoader();
+            }, 500);
+          }
+        }
+        
+        setTimeout(() => {
+          if (loadedCount < totalCount) {
+            hideLoader();
+          }
+        }, 10000);
+      }
+
+      function hideLoader() {
+        const loader = document.getElementById("mafia-loader");
+        const content = document.getElementById("mafia-page-content");
+        
+        if (loader) loader.style.display = "none";
+        if (content) content.style.display = "block";
+        
+        window.scrollTo(0, 0);
+      }
+
+      window.addEventListener("load", () => {
+        window.scrollTo(0, 0);
+        const progressBar = document.querySelector(".loader-progress");
+        if (progressBar) {
+          progressBar.style.width = "0";
+          progressBar.style.animation = "none";
+        }
+        preloadAllMedia();
+      });
     </script>
+    </div>
   </body>
 </html>

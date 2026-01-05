@@ -332,6 +332,83 @@ document.getElementById('next-year').addEventListener('click', () => {
   renderAllCalendars(currentYear);
 });
 
+// Функция для загрузки всех изображений
+function preloadAllMedia() {
+  const images = document.querySelectorAll("img");
+  const allMedia = [...images];
+  
+  let loadedCount = 0;
+  const totalCount = allMedia.length;
+  
+  if (totalCount === 0) {
+    hideLoader();
+    return;
+  }
+  
+  const updateProgress = () => {
+    const progress = (loadedCount / totalCount) * 100;
+    const progressBar = document.querySelector(".loader-progress");
+    if (progressBar) {
+      progressBar.style.width = `${progress}%`;
+    }
+  };
+  
+  allMedia.forEach(media => {
+    if (media.complete) {
+      loadedCount++;
+      updateProgress();
+      checkComplete();
+    } else {
+      media.addEventListener("load", () => {
+        loadedCount++;
+        updateProgress();
+        checkComplete();
+      });
+      media.addEventListener("error", () => {
+        loadedCount++;
+        updateProgress();
+        checkComplete();
+      });
+    }
+  });
+  
+  function checkComplete() {
+    if (loadedCount >= totalCount) {
+      // Минимальное время показа загрузки для плавности
+      setTimeout(() => {
+        hideLoader();
+      }, 500);
+    }
+  }
+  
+  // Таймаут на случай, если что-то не загрузится
+  setTimeout(() => {
+    if (loadedCount < totalCount) {
+      hideLoader();
+    }
+  }, 10000);
+}
+
+function hideLoader() {
+  const loader = document.getElementById('calendar-loader');
+  const content = document.getElementById('calendar-page-content');
+  
+  animationsEnabled = true;
+
+  if (loader) {
+    loader.style.display = 'none';
+  }
+  if (content) {
+    content.style.display = 'block';
+  }
+
+  // перерисуем с включёнными анимациями для первого показа
+  renderAllCalendars(currentYear);
+  renderUpcoming();
+  
+  window.scrollTo(0, 0);
+}
+
 // Initialization + прелоадер только для календаря
 document.addEventListener('DOMContentLoaded', () => {
   // отрисовываем данные заранее, но анимации включим только после прелоадера
@@ -342,22 +419,17 @@ document.addEventListener('DOMContentLoaded', () => {
   renderAllCalendars(currentYear);
   renderUpcoming();
 
-  const loader = document.getElementById('calendar-loader');
-  const content = document.getElementById('calendar-page-content');
+  // Инициализируем прогресс-бар
+  const progressBar = document.querySelector(".loader-progress");
+  if (progressBar) {
+    progressBar.style.width = "0";
+    progressBar.style.animation = "none";
+  }
+});
 
-  setTimeout(() => {
-    animationsEnabled = true;
-
-    if (loader) {
-      loader.style.display = 'none';
-    }
-    if (content) {
-      content.style.display = 'block';
-    }
-
-    // перерисуем с включёнными анимациями для первого показа
-    renderAllCalendars(currentYear);
-    renderUpcoming();
-  }, 1500);
+window.addEventListener("load", () => {
+  window.scrollTo(0, 0);
+  // Начинаем загрузку всех медиа-файлов
+  preloadAllMedia();
 });
 
